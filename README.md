@@ -12,72 +12,57 @@ This project is an **End-to-End Data Engineering Pipeline** designed to process 
 
 The system ingests raw "dirty" logs, transforms them using **PySpark** (handling complex data quality issues like Thai Buddhist dates), loads them into a **PostgreSQL Data Warehouse** modeled with **Star Schema**, and visualizes insights via a **Power BI** dashboard.
 
-## 🧩 System Architecture
-
-The pipeline runs entirely in a **Dockerized environment**, ensuring consistency and ease of deployment.
-
-```mermaid
-graph LR
-    %% Definitions
-    subgraph Host_Machine ["💻 Host Machine (Windows)"]
-        Data_Lake[("📂 Data Lake\n(Local Folders)")]
-        PowerBI["📊 Power BI\n(Dashboard)"]
-    end
-
-    subgraph Docker_Env ["🐳 Docker Environment"]
-        subgraph Container_1 ["PySpark Container"]
-            Spark[["🔥 Apache Spark\n(ETL Processing)"]]
-        end
-
-        subgraph Container_2 ["PostgreSQL Container"]
-            DW[("🐘 Data Warehouse\n(Star Schema)")]
-        end
-    end
-
-    %% Data Flow
-    Data_Lake == "Docker Volume Mount\n(Read Raw JSON/CSV)" ==> Spark
-    Spark -- "JDBC Writer\n(Internal Docker Network)" --> DW
-    DW -.-> "Port Forwarding (5432)\nImport/Direct Query" -.-> PowerBI
-
-    %% Styling
-    style Docker_Env fill:#e1f5fe,stroke:#01579b,stroke-width:2px,stroke-dasharray: 5 5
-    style Spark fill:#ffcc80,stroke:#e65100
-    style DW fill:#b3e5fc,stroke:#0277bd
-    style PowerBI fill:#fff9c4,stroke:#fbc02d
-```
 
 ## 📂 Project Structure
 
 ```bash
 Customer_Analytics_App/
 │
-├── config/                     # Configuration files
-│   └── postgresql-42.7.2.jar   # JDBC Driver for Spark-Postgres connection
+├── config/                     
+│   └── postgresql-42.7.2.jar  
 │
-├── data/                       # Data Lake (Local storage)
+├── data/                       
 │   └── raw/
-│       ├── log_content/        # Raw Watch logs (CSV)
-│       └── log_search/         # Raw Search logs (JSON)
+│       ├── log_content/        
+│       └── log_search/        
 │
-├── sql/                        # Database Schema Scripts
-│   └── init_schema.sql         # DDL for Star Schema (Auto-run on init)
+├── sql/                        
+│   └── init_schema.sql         
 │
-├── src/                        # Source Code
+├── src/                       
 │   ├── __init__.py
-│   └── etl_job.py              # Main PySpark ETL Script
+│   └── etl_job.py           
 │
-├── reports/                    # BI Reports
+├── reports/                  
 │   └── Customer_360_Insights.pbix
 │
-├── images/                     # Screenshots for Documentation
+├── images/                    
 │   └── dashboard_demo.png
 │
-├── docker-compose.yml          # Container Orchestration
-├── Dockerfile                  # Custom Spark Image build
-├── requirements.txt            # Python dependencies
-└── README.md                   # Documentation
+├── docker-compose.yml         
+├── Dockerfile                  
+├── requirements.txt            
+└── README.md                   
 ```
+## 🔄 Full Pipeline Flow
 
+The data flows sequentially through the following stages:
+
+1.  **Ingestion (Data Lake):**
+    * Raw user logs (`log_search.json`, `log_content.csv`) are stored in the local `data/raw/` directory.
+    * These files are mounted into the **PySpark** container via Docker Volumes.
+
+2.  **ETL Processing (PySpark):**
+    * Spark reads the raw data and performs data cleaning (handling **Thai Buddhist dates**, normalizing numerals, removing NULLs).
+    * Data is transformed and mapped to the **Star Schema** logic (creating Fact and Dimension dataframes).
+
+3.  **Data Warehousing (PostgreSQL):**
+    * The transformed data is written into **PostgreSQL** tables using the JDBC driver.
+    * Data is organized into Fact tables (`fact_watch`, `fact_search`) and Dimension tables (`dim_customer`, `dim_date`).
+
+4.  **Reporting & Visualization (Power BI):**
+    * **Power BI** connects directly to the PostgreSQL container (via localhost:5432).
+    * The dashboard visualizes key metrics such as User Segmentation, Search Trends, and Content Popularity.
 ## 🚀 Key Features & Technical Highlights
 
 ### 1. Complex Data Cleaning (PySpark)
@@ -139,13 +124,3 @@ Open `reports/Customer_360_Insights.pbix` in Power BI to view the dashboard.
 _(Screenshot of the Power BI Dashboard)_
 
 ![Dashboard Demo](images/dashboard_demo.png)
-
-## 👨‍💻 Author
-
-**[YOUR NAME]**
-
-- **Role:** Data Engineer Intern Applicant
-- **University:** Ho Chi Minh City Open University
-- **Tech Stack:** Python, SQL, Spark, Docker, Power BI
-- **Email:** [Your Email Here]
-- **LinkedIn:** [Your Profile Link]
