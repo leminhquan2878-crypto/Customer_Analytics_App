@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  postgres_dw:
+    image: postgres:15
+    container_name: postgres_dw
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: customer_dw
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - data-network
+
+  etl_job:
+    build: .  # Build từ Dockerfile ở thư mục hiện tại
+    container_name: pyspark_etl
+    depends_on:
+      - postgres_dw 
+    volumes:
+      - ./src/etl_job.py:/app/etl_job.py
+      - ./data:/data
+      - ./config/postgresql-42.7.2.jar:/app/postgresql-42.7.2.jar
+    networks:
+      - data-network
+
+volumes:
+  pgdata:
+
+networks:
+  data-network:
+    driver: bridge
